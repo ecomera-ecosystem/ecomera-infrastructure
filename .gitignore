@@ -1,0 +1,5 @@
+.env
+.idea/
+vault-creds/
+*.key
+*.pem
