@@ -70,7 +70,7 @@ services:
         wait
       "
     networks:
-      - ecomera-network
+      - ecomera-infra-network
     healthcheck:
       test: ["CMD", "sh", "-c", "vault status >/dev/null 2>&1"]
       interval: 10s
@@ -80,7 +80,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: ecomera-db
+    container_name: ecomera-infra-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ecomera}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -90,7 +90,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - ecomera-network
+      - ecomera-infra-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -100,7 +100,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: ecomera-redis
+    container_name: ecomera-infra-redis
     ports:
       - "6379:6379"
     volumes:
@@ -112,7 +112,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - ecomera-network
+      - ecomera-infra-network
     restart: unless-stopped
 
 volumes:
@@ -122,5 +122,5 @@ volumes:
   vault-creds:
 
 networks:
-  ecomera-network:
+  ecomera-infra-network:
     driver: bridge
