@@ -3,3 +3,4 @@
 vault-creds/
 *.key
 *.pem
+*.iml

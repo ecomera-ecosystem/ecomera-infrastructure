@@ -1,11 +1,12 @@
 services:
   vault:
     image: hashicorp/vault:1.18
-    container_name: ecomera-vault
+    container_name: ecomera-infra-vault
     ports:
       - "8200:8200"
     volumes:
       - ./vault/config/vault-config.hcl:/vault/config/vault-config.hcl
+      - ./vault/init.sh:/vault/init.sh
       - vault-data:/vault/data
       - vault-creds:/vault-creds
     environment:
@@ -13,61 +14,11 @@ services:
       VAULT_CONFIG: /vault/config/vault-config.hcl
     cap_add:
       - IPC_LOCK
-    entrypoint: >
+    entrypoint: |
       sh -c "
-        vault server -config=/vault/config/vault-config.hcl &
-        VAULT_ADDR=http://127.0.0.1:8200
-        echo '[vault] Waiting for Vault to start...'
-        until vault status >/dev/null 2>&1; do sleep 2; done
-        echo '[vault] Checking if already initialized...'
-        if vault status 2>&1 | grep -q 'Sealed: true'; then
-          echo '[vault] Vault is sealed but initialized, reading credentials...'
-          if [ -f /vault-creds/vault.env ]; then
-            . /vault-creds/vault.env
-            vault operator unseal $$VAULT_UNSEAL_KEY
-            echo '[vault] Vault unsealed successfully'
-          else
-            echo '[vault] ERROR: Vault initialized but credentials missing'
-            echo '[vault] Run: docker volume rm ecomera_vault-data ecomera_vault-creds'
-            echo '[vault] Then restart to reinitialize'
-            exit 1
-          fi
-        else
-          echo '[vault] Initializing Vault...'
-          INIT_OUTPUT=$$(vault operator init -format=json -key-shares=1 -key-threshold=1)
-          UNSEAL_KEY=$$(echo $$INIT_OUTPUT | sed -n 's/.*"unseal_keys_b64":\["\([^"]*\)".*/\1/p')
-          ROOT_TOKEN=$$(echo $$INIT_OUTPUT | sed -n 's/.*"root_token":"\([^"]*\)".*/\1/p')
-          vault operator unseal $$UNSEAL_KEY
-          echo '[vault] Enabling KV v2 secrets engine...'
-          vault secrets enable -path=secret kv-v2
-          echo '[vault] Seeding secrets for product-service...'
-          vault kv put secret/ecomera/product-service \
-            db/host=postgres db/port=5432 db/name=ecomera_product \
-            db/username=ecomera_product_user db/password=ProductSecret2026 \
-            redis/host=redis redis/port=6379 redis/password=RedisSecret2026 \
-            jwt/signing-key=SuperSecretJWTKeyThatShouldBeRotatedRegularly1234567890 \
-            jwt/access-token-ttl=3600000 jwt/refresh-token-ttl=604800000
-          echo '[vault] Seeding secrets for auth-service...'
-          vault kv put secret/ecomera/auth-service \
-            db/host=postgres db/port=5432 db/name=ecomera_auth \
-            db/username=ecomera_auth_user db/password=AuthSecret2026 \
-            jwt/signing-key=SuperSecretJWTKeyThatShouldBeRotatedRegularly1234567890 \
-            jwt/access-token-ttl=3600000 jwt/refresh-token-ttl=604800000
-          echo '[vault] Seeding secrets for api-gateway...'
-          vault kv put secret/ecomera/api-gateway \
-            zipkin/url=http://zipkin:9411/api/v2/spans
-          echo 'VAULT_ADDR=http://vault:8200' > /vault-creds/vault.env
-          echo 'VAULT_TOKEN='$$ROOT_TOKEN >> /vault-creds/vault.env
-          echo 'VAULT_UNSEAL_KEY='$$UNSEAL_KEY >> /vault-creds/vault.env
-          echo ''
-          echo '========================================'
-          echo '  Vault initialized successfully!'
-          echo '  Root Token:     '$$ROOT_TOKEN
-          echo '  Unseal Key:     '$$UNSEAL_KEY
-          echo '  UI:             http://localhost:8200/ui'
-          echo '========================================'
-        fi
-        wait
+        vault server -config=/vault/config/vault-config.hcl > /tmp/vault.log 2>&1 &
+        chmod +x /vault/init.sh
+        exec /vault/init.sh
       "
     networks:
       - ecomera-infra-network
@@ -88,6 +39,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ecomera-infra-network
