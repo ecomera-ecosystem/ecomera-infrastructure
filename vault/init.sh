@@ -48,6 +48,8 @@ echo '[vault] Seeding secrets for product-service...'
 vault kv put secret/ecomera/product-service db/password=postgres redis/password= jwt/signing-key=SuperSecretJWTKeyThatShouldBeRotatedRegularly1234567890
 echo '[vault] Seeding secrets for auth-service...'
 vault kv put secret/ecomera/auth-service db/password=postgres jwt/signing-key=SuperSecretJWTKeyThatShouldBeRotatedRegularly1234567890
+echo '[vault] Seeding secrets for cart-service...'
+vault kv put secret/ecomera/cart-service db/password=postgres redis/password=
 echo '[vault] Seeding secrets for api-gateway...'
 vault kv put secret/ecomera/api-gateway zipkin/url=http://zipkin:9411/api/v2/spans
 echo '[vault] Seeding complete!'

@@ -66,6 +66,7 @@ VAULT_TOKEN=<your-root-token>
 - `ecomera-config-server`
 - `ecomera-product-service`
 - `ecomera-auth-service`
+- `ecomera-cart-service`
 - `ecomera-api-gateway`
 
 Each service has a `.env.example` file you can copy:
@@ -93,6 +94,9 @@ secret/ecomera/
 │   ├── db/password
 │   ├── redis/password
 │   └── jwt/signing-key
+├── cart-service/
+│   ├── db/password
+│   └── redis/password
 ├── auth-service/
 │   ├── db/password
 │   └── jwt/signing-key
