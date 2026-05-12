@@ -52,6 +52,8 @@ echo '[vault] Seeding secrets for cart-service...'
 vault kv put secret/ecomera/cart-service db/password=postgres redis/password=
 echo '[vault] Seeding secrets for order-service...'
 vault kv put secret/ecomera/order-service db/password=postgres redis/password=
+echo '[vault] Seeding secrets for payment-service...'
+vault kv put secret/ecomera/payment-service db/password=postgres redis/password= stripe/secret-key=sk_test_placeholder stripe/webhook-secret=whsec_placeholder
 echo '[vault] Seeding secrets for api-gateway...'
 vault kv put secret/ecomera/api-gateway zipkin/url=http://zipkin:9411/api/v2/spans
 echo '[vault] Seeding complete!'
