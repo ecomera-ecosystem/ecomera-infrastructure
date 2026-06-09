@@ -67,11 +67,76 @@ services:
       - ecomera-infra-network
     restart: unless-stopped
 
+  mongodb:
+    image: mongo:7
+    container_name: ecomera-infra-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ecomera-infra-network
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: ecomera-infra-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - ecomera-infra-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.2
+    container_name: ecomera-infra-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - ecomera-infra-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.2
+    container_name: ecomera-infra-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - ecomera-infra-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ecomera-infra-kafka-ui
+    ports:
+      - "8100:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ecomera
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on:
+      - kafka
+      - zookeeper
+    networks:
+      - ecomera-infra-network
+
 volumes:
   postgres_data:
   redis_data:
   vault-data:
   vault-creds:
+  mongo_data:
+  kafka_data:
 
 networks:
   ecomera-infra-network:
