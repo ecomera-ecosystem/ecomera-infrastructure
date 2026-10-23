@@ -160,6 +160,15 @@ services:
       - ecomera-infra-network
     restart: unless-stopped
 
+  zipkin:
+    image: openzipkin/zipkin:3.6.1
+    container_name: ecomera-infra-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - ecomera-infra-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
